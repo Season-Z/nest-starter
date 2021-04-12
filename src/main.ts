@@ -4,12 +4,19 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { TransformInterceptor } from './interceptors/transform.interceptor';
+import { HttpExceptionFilter } from './filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   // 配置视图文件的目录
   app.setBaseViewsDir(join(__dirname, '..', 'views'));
   app.setViewEngine('ejs');
+
+  // 全局过滤器
+  app.useGlobalFilters(new HttpExceptionFilter());
+  // 全局使用拦截器
+  app.useGlobalInterceptors(new TransformInterceptor());
 
   const options = new DocumentBuilder()
     .setTitle('zhouxishun')

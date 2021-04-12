@@ -17,7 +17,7 @@ import { UserDecorator } from './user.decorator';
 import { BaseUserDto } from './user.dto';
 import { UserEntity } from './user.entity';
 import { UserService } from './user.service';
-import { ValidationPipe } from '../utils/validation';
+import { ValidationPipe } from '../pipe/validation.pipe';
 
 @ApiBearerAuth()
 @ApiTags('user')

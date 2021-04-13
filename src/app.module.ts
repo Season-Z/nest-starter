@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from 'nestjs-config';
 import { APP_GUARD } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Connection } from 'typeorm';
+import { resolve } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ArticleModule } from './article/article.module';
@@ -9,7 +11,29 @@ import { AuthGuard } from './guard/auth.guard';
 import { UserModule } from './user/user.module';
 
 @Module({
-  imports: [TypeOrmModule.forRoot(), UserModule, ArticleModule],
+  imports: [
+    // 配置加载配置文件
+    ConfigModule.load(resolve(__dirname, 'config', '**/!(*.d).{ts,js}'), {
+      modifyConfigName: (name) => name.replace('.config', ''),
+    }),
+    TypeOrmModule.forRootAsync({
+      useFactory: async (config: ConfigService) => ({
+        type: config.get('database.type'),
+        host: config.get('database.host'),
+        port: config.get('database.port'),
+        username: config.get('database.username'),
+        password: config.get('database.password'),
+        database: config.get('database.database'),
+        entities: [__dirname + '/**/*.entity{.ts,.js}'],
+        synchronize: config.get('database.synchronize'),
+        logging: config.get('database.logging'),
+        timezone: '+08:00', // 东八区
+      }),
+      inject: [ConfigService],
+    }),
+    UserModule,
+    ArticleModule,
+  ],
   controllers: [AppController],
   providers: [
     AppService,

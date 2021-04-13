@@ -1,4 +1,9 @@
-import { Module } from '@nestjs/common';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import { ConfigModule, ConfigService } from 'nestjs-config';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -6,10 +11,11 @@ import { Connection } from 'typeorm';
 import { resolve } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ArticleModule } from './article/article.module';
+import { ArticleModule } from './modules/article/article.module';
 import { AuthGuard } from './guard/auth.guard';
-import { UserModule } from './user/user.module';
+import { UserModule } from './modules/user/user.module';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
+import { AuthMiddleware } from './middleware/auth.middleware';
 
 @Module({
   imports: [
@@ -48,6 +54,11 @@ import { LoggingInterceptor } from './interceptors/logging.interceptor';
     },
   ],
 })
-export class AppModule {
+export class AppModule implements NestModule {
   constructor(private readonly connection: Connection) {}
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(AuthMiddleware)
+      .forRoutes({ path: '*', method: RequestMethod.ALL });
+  }
 }

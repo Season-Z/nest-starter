@@ -3,9 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { getRepository, Repository } from 'typeorm';
 import * as argon2 from 'argon2';
 import * as jwt from 'jsonwebtoken';
-import { BaseUserDto, UserTokenDto } from './user.dto';
+import { BaseUserDto, UserTokenDto } from './dto/user.dto';
 import { UserEntity } from './user.entity';
-import { SECRET } from '../utils/config';
+import { SECRET } from '../../utils/config';
 // import { CRYPTO_SECRET } from '../utils/config';
 
 @Injectable()
@@ -59,12 +59,25 @@ export class UserService {
   }
 
   async update(id: number, dto: BaseUserDto): Promise<UserEntity> {
-    const user = await this.userRepository.findOne(id);
+    const user = await this.userRepository.findOne({ username: dto.username });
+    if (user) {
+      throw new HttpException(
+        {
+          error: '该用户名已存在',
+        },
+        200,
+      );
+    }
 
-    Reflect.deleteProperty(user, 'password');
+    const targetUser = await this.userRepository.findOne(id);
+
+    Reflect.deleteProperty(targetUser, 'password');
 
     const newPassword = await argon2.hash(dto.password);
-    const updated = Object.assign(user, { ...dto, password: newPassword });
+    const updated = Object.assign(targetUser, {
+      ...dto,
+      password: newPassword,
+    });
 
     return await this.userRepository.save(updated);
   }
